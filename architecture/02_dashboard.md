@@ -4,109 +4,68 @@
 ---
 
 ## Purpose
-Render scraped article data in a premium, interactive single-page dashboard. All data comes from `localStorage` cache populated by the in-browser RSS parser running via CORS proxy.
+Render scraped article data in a premium, interactive single-page dashboard. All data comes from `localStorage` cache populated by the in-browser RSS parser or specialized RSS-to-JSON service.
 
 ---
 
 ## Technology
-- Vanilla HTML5 / CSS3 / JavaScript (no framework, no build step)
-- Single IIFE `<script>` tag in `index.html` — **no ES modules** (blocked on `file://`)
-- Open `index.html` directly from the filesystem — no server required
-- CORS Proxy (primary): `https://api.allorigins.win/get?url=`
-- CORS Proxy (fallback): `https://api.codetabs.com/v1/proxy?quest=`
+- **Vanilla HTML5 / CSS3 / JavaScript**: No framework, no build step.
+- **Vercel Optimized**: Fully compatible with Vercel deployment.
+- **Single IIFE `<script>`**: Avoids ES module issues on `file://`.
+- **Primary Data Service**: `RSS2JSON` API (Specialized RSS-to-JSON).
+- **Fallback Loop**: `fetch()` API with automatic proxy rotation (AllOrigins, CodeTabs, CorsProxy).
 
 ---
 
-## Brand Design System (as of 2026-02-21)
+## Brand Design System
 | Token | Value |
 |-------|-------|
 | Background | `#050505` (obsidian) |
 | Accent | `#D4FF33` (Glaido lime green) |
 | Surface | `#111111` |
-| Text Primary | `#ffffff` |
-| Text Muted | `#a1a1a1` |
-| Font | Inter (Google Fonts) |
-| Logo | `DesignGuidelines/DesignLogo.png` |
-| Layout | Left sidebar (220px) + main content grid |
+| Image | `DesignGuidelines/DesignLogo.png` |
+| Layout | Mobile-first responsive grid. Left sidebar (Desktop) / Sliding Drawer (Mobile). |
+| Aesthetics | Glassmorphism, animated backgrounds, premium gradients. |
 
 ---
 
 ## Layout Structure
 ```
 .app-shell (CSS grid)
-├── .sidebar (left, fixed width)
+├── .mobile-top-bar (visible only on mobile)
+├── .sidebar-overlay (for mobile drawer backdrop)
+├── .sidebar (fixed desktop / absolute drawer mobile)
 │   ├── .sidebar-brand (logo + name)
-│   ├── .sidebar-section (nav items: All / Ben's Bites / The AI Rundown / Saved)
-│   └── .sidebar-footer (live source status + Refresh Feeds button)
-├── .main-header (breadcrumb + page title)
+│   ├── .sidebar-section (tabs: All / Ben's Bites / The Rundown AI / Saved)
+│   └── .sidebar-footer (source status + tooltips + Refresh button)
+├── .main-header (sticky, breadcrumb, page title)
 └── .main-content
-    ├── .stats-row (4 metric cards)
-    ├── .section-header
-    └── #articles-grid (article cards)
+    ├── .saved-bg-overlay (animated shapes for Saved tab)
+    ├── .stats-row (4 glass cards)
+    └── #articles-grid (masonry-style grid of article cards)
 ```
 
 ---
 
-## Rendering Logic
+## Runtime Logic
 
-### On Page Load
-1. Read `scruper_cache` from `localStorage`
-2. Read `scruper_saved` from `localStorage`
-3. Check `scruper_last_fetch` timestamp
-4. If last fetch > 72 hours ago (or no cache): trigger `fetchAll()`
-5. Render articles filtered to last **72h** (saved articles always shown)
-6. Update nav badges + stats row
+### 1. Unified Fetching Strategy
+- **Fetch Throttle (6h)**: App re-fetches feeds automatically if they are stale (>6h).
+- **Time Window (72h)**: Feed filters articles to the last 3 days of content.
+- **Persistence**: Save button state is preserved in `state.savedIds` and persisted to `localStorage['scruper_saved']`.
 
-### fetchAll()
-1. For each feed in `FEEDS` array:
-   - Show source status dot in "loading" (amber pulse)
-   - Fetch via primary CORS proxy → fallback if fails
-   - Parse XML with `DOMParser`
-   - Merge into localStorage cache (deduplicate by `id`)
-   - Update source status dot → "ok" (lime) or "error" (red)
-2. Update `scruper_last_fetch` timestamp
-3. Re-render articles grid
+### 2. Navigation & Rendering
+- **Saved Tab**: Triggers the `.saved-page` class on `.main-content`, activating animated "Shape Landing Hero" blobs.
+- **Mobile Menu**: Uses a sliding drawer animation with a hamburger toggle button and a backdrop blur overlay.
 
-### Article Card
-Each card shows:
-- Source badge (colored pill, color per source)
-- Published time (relative: "2h ago")
-- **TOP PICK** badge on first card per source
-- Article title (links to original in new tab)
-- Summary (260 chars, boilerplate stripped)
-- Article image (if available, lazy-loaded)
-- Tags (if present)
-- "Read Article →" link + Save button (☆ / ★)
+### 3. Article Cards
+- **Smart Images**: Fallback to source logo or removing image container if URL fails.
+- **Deduplication**: SHA-like hashing of the URL to ensure no duplicate articles across sources.
+- **Boilerplate Stripping**: Summaries are cleaned of common preamble ("Read Online", etc.).
 
 ---
 
-## State Management
-- All state lives in the `state` object inside the IIFE
-- Persisted to `localStorage` on every change
-- `localStorage` keys: `scruper_cache`, `scruper_saved`, `scruper_last_fetch`
-- Phase 2: `localStorage` will be replaced by Supabase
-
----
-
-## Navigation
-| Nav Item | Filter Logic |
-|----------|-------------|
-| All Articles | `isWithin72h(a)` or `savedIds[a.id]` |
-| Ben's Bites | Above + `a.source === 'bensbites'` |
-| The AI Rundown | Above + `a.source === 'rundown_ai'` |
-| Saved | `savedIds[a.id]` (no time filter) |
-
----
-
-## Error States
-- Feed fetch failed → Source status dot red + retry button
-- No articles in 72h window → Empty state with floating 📭 icon + message
-- Saved tab empty → "You haven't saved any articles yet" message
-
----
-
-## Performance Rules
-- No external JS frameworks
-- Images lazy-loaded via `loading="lazy"`
-- Animations: `transform` + `opacity` only (GPU accelerated)
-- No synchronous fetch calls — all XHR async
+## Performance & UX
+- **No Synchronous Calls**: All network requests use modern `async/wait` fetch.
+- **GPU Animations**: UI transitions (drawer, scale-ups, floating shapes) use `transform` and `opacity` only.
+- **Error Transparency**: Troubleshooting info (HTTP codes) is available by hovering over the status dots in the sidebar.

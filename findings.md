@@ -56,7 +56,16 @@
 
 ---
 
+## 🚀 Vercel Deployment & 403 Forbidden (2026-02-21)
+- **Problem**: When deployed to Vercel, generic CORS proxies (AllOrigins) often return `403 Forbidden` or `503 Service Unavailable` due to high traffic or IP-based rate limiting on newsletter platforms (Beehiiv/Substack).
+- **Solution**: Switch to a specialized RSS-to-JSON service like **RSS2JSON**.
+- **RSS2JSON API**: `https://api.rss2json.com/v1/api.json?rss_url={url}`
+- **Advantage**: Higher reliability, clean JSON output, and lower likelihood of being flagged as a "scraper" compared to general-purpose proxies.
+
+---
+
 ## ⚠️ Known Constraints
 1. Beehiiv RSS feeds may include template variables like `{{ first_name | AI enthusiasts }}` in content — these must be stripped.
-2. Ben's Bites Substack posts may have long HTML content — summarize to first 300 chars.
-3. Both feeds are updated once daily (morning EST) — 24-hour filter will often return 1 article per source.
+2. The Rundown AI rebranded from "The AI Rundown" — consistency in naming is required.
+3. Vercel deployment requires robust `fetch()` retry logic with proxy rotation support.
+4. **Cache Strategy**: A 6-hour fetch throttle with a 72-hour display window is the optimal balance for daily newsletters.
