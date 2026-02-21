@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scruper — AI Newsletter Intelligence Dashboard</title>
+  <meta name="description"
+    content="Your personal AI intelligence dashboard. Aggregates the latest articles from Ben's Bites, The AI Rundown, and more — updated every 24 hours.">
+  <meta name="theme-color" content="#050505">
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23111'/><text y='72' x='14' font-size='72' fill='white'>S</text></svg>">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+
+<body>
+
+  <div class="app-shell">
+
+    <!-- ══════════════════════════════════════
+         SIDEBAR
+    ═══════════════════════════════════════ -->
+    <aside class="sidebar">
+
+      <!-- Brand -->
+      <div class="sidebar-brand">
+        <img src="DesignGuidelines/DesignLogo.png" alt="Scruper" class="brand-logo-img">
+        <div>
+          <div class="brand-name">Scruper</div>
+          <div class="brand-sub">AI Intelligence</div>
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <div class="sidebar-section">
+        <p class="sidebar-label">Navigation</p>
+        <button class="nav-item active" data-tab="all" id="nav-all">
+          <span class="nav-icon">📰</span>
+          All Articles
+          <span class="nav-badge" id="badge-all">—</span>
+        </button>
+        <button class="nav-item" data-tab="bensbites" id="nav-bensbites">
+          <span class="nav-icon">🍔</span>
+          Ben's Bites
+          <span class="nav-badge" id="badge-bensbites">—</span>
+        </button>
+        <button class="nav-item" data-tab="rundown_ai" id="nav-rundown">
+          <span class="nav-icon">⚡</span>
+          The Rundown AI
+          <span class="nav-badge" id="badge-rundown">—</span>
+        </button>
+        <button class="nav-item" data-tab="saved" id="nav-saved">
+          <span class="nav-icon">★</span>
+          Saved
+          <span class="nav-badge" id="badge-saved">—</span>
+        </button>
+      </div>
+
+      <!-- Source Status -->
+      <div class="sidebar-footer">
+        <p class="footer-label">Live Sources</p>
+        <div id="source-status">
+          <div class="source-status-item">
+            <span class="status-dot loading"></span>
+            <span class="source-status-name">Ben's Bites</span>
+            <span class="source-status-count">●</span>
+          </div>
+          <div class="source-status-item">
+            <span class="status-dot loading"></span>
+            <span class="source-status-name">The AI Rundown</span>
+            <span class="source-status-count">●</span>
+          </div>
+        </div>
+
+        <!-- Refresh Button -->
+        <button id="refresh-btn" class="sidebar-refresh" aria-label="Refresh all feeds">
+          <span class="refresh-spin">↻</span>
+          Refresh Feeds
+        </button>
+
+        <div id="last-fetch-time" style="font-size:10.5px;color:var(--text-muted);text-align:center;margin-top:6px;">
+          Checking for updates…
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- ══════════════════════════════════════
+         MAIN HEADER
+    ═══════════════════════════════════════ -->
+    <header class="main-header">
+      <div>
+        <p class="breadcrumb">
+          <span>Home</span>
+          <span class="breadcrumb-sep">›</span>
+          <span id="breadcrumb-current">All Articles</span>
+        </p>
+        <h1 class="page-title" id="page-title">All Articles</h1>
+        <p class="page-subtitle">Curated AI content from top newsletters, last 24 hours</p>
+      </div>
+    </header>
+
+    <!-- ══════════════════════════════════════
+         MAIN CONTENT
+    ═══════════════════════════════════════ -->
+    <main class="main-content">
+
+      <!-- Stats Row -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <p class="stat-label">Articles Today</p>
+          <div class="stat-value-row">
+            <span class="stat-value" id="stat-total">—</span>
+          </div>
+          <p class="stat-sub">from last 24 hours</p>
+        </div>
+        <div class="stat-card">
+          <p class="stat-label">Sources</p>
+          <div class="stat-value-row">
+            <span class="stat-value">2</span>
+            <span class="stat-badge">↑ active</span>
+          </div>
+          <p class="stat-sub">newsletters tracked</p>
+        </div>
+        <div class="stat-card">
+          <p class="stat-label">Saved</p>
+          <div class="stat-value-row">
+            <span class="stat-value" id="stat-saved">—</span>
+          </div>
+          <p class="stat-sub">bookmarked articles</p>
+        </div>
+        <div class="stat-card">
+          <p class="stat-label">Window</p>
+          <div class="stat-value-row">
+            <span class="stat-value">72h</span>
+          </div>
+          <p class="stat-sub">refresh interval</p>
+        </div>
+      </div>
+
+      <!-- Section Header -->
+      <div class="section-header">
+        <h2 class="section-title" id="section-title">Recent Articles</h2>
+        <a href="#" class="view-all-link" id="view-all-link" style="display:none">View All</a>
+      </div>
+
+      <!-- Articles Grid -->
+      <div class="saved-bg-overlay">
+        <div class="floating-shape shape-1"></div>
+        <div class="floating-shape shape-2"></div>
+        <div class="floating-shape shape-3"></div>
+      </div>
+      <div id="articles-grid">
+        <!-- Skeleton loaders -->
+        <div class="article-card skeleton-card">
+          <div class="card-body">
+            <div class="skeleton-line short"></div>
+            <div class="skeleton-line"></div>
+            <div class="skeleton-line medium"></div>
+            <div class="skeleton-line long"></div>
+            <div class="skeleton-line medium"></div>
+          </div>
+        </div>
+        <div class="article-card skeleton-card">
+          <div class="card-body">
+            <div class="skeleton-line short"></div>
+            <div class="skeleton-line"></div>
+            <div class="skeleton-line medium"></div>
+            <div class="skeleton-line long"></div>
+            <div class="skeleton-line medium"></div>
+          </div>
+        </div>
+        <div class="article-card skeleton-card">
+          <div class="card-body">
+            <div class="skeleton-line short"></div>
+            <div class="skeleton-line"></div>
+            <div class="skeleton-line medium"></div>
+            <div class="skeleton-line long"></div>
+            <div class="skeleton-line medium"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div id="empty-state">
+        <div class="empty-icon">📭</div>
+        <h2 class="empty-title">Nothing here yet</h2>
+        <p class="empty-body" id="empty-message">No new articles from the last 24 hours. Check back later or click
+          Refresh Feeds.</p>
+      </div>
+
+    </main>
+  </div><!-- /.app-shell -->
+
+  <!-- ══════════════════════════════════════
+       APP SCRIPT
+  ═══════════════════════════════════════ -->
+  <script>
+    (function () {
+      'use strict';
+
+      var FEEDS = [
+        {
+          source: 'bensbites',
+          source_label: "Ben's Bites",
+          url: 'https://bensbites.substack.com/feed',
+          color: '#818cf8',  // indigo — Ben's Bites brand color
+          icon: '🍔',
+          description: 'AI tools, startups & investing insights'
+        },
+        {
+          source: 'rundown_ai',
+          source_label: 'The Rundown AI',
+          url: 'https://rss.beehiiv.com/feeds/2R3C6Bt5wj.xml',
+          color: '#D4FF33',
+          icon: '⚡',
+          description: 'Daily AI news briefing for professionals'
+        }
+      ];
+
+      var TAB_LABELS = {
+        all: 'All Articles',
+        bensbites: "Ben's Bites",
+        rundown_ai: 'The AI Rundown',
+        saved: 'Saved Articles'
+      };
+
+
+      var STORAGE_CACHE = 'scruper_cache';
+      var STORAGE_SAVED = 'scruper_saved';
+      var STORAGE_FETCH = 'scruper_last_fetch';
+      var WINDOW_MS = 72 * 60 * 60 * 1000; // how old an article can be to show in the feed
+      var FETCH_THROTTLE_MS = 6 * 60 * 60 * 1000; // how often to auto-fetch new articles (6h)
+      var FETCH_TIMEOUT_MS = 8000; // reduce timeout to 8s for faster failover
+
+      var state = {
+        articles: [],
+        savedIds: {},
+        activeTab: 'all',
+        loading: {},
+        errors: {},
+        lastFetch: null
+      };
+
+      // ── Storage ─────────────────────────────────────────────
+      function loadStorage() {
+        try {
+          var cache = JSON.parse(localStorage.getItem(STORAGE_CACHE) || '{}');
+          var saved = JSON.parse(localStorage.getItem(STORAGE_SAVED) || '[]');
+          var lf = localStorage.getItem(STORAGE_FETCH);
+          state.articles = cache.articles || [];
+          state.savedIds = {};
+          saved.forEach(function (id) { state.savedIds[id] = true; });
+          state.lastFetch = lf ? new Date(lf) : null;
+        } catch (e) { /* ignore */ }
+      }
+
+      function saveStorage() {
+        try {
+          localStorage.setItem(STORAGE_CACHE, JSON.stringify({ articles: state.articles }));
+          localStorage.setItem(STORAGE_SAVED, JSON.stringify(Object.keys(state.savedIds)));
+          if (state.lastFetch) localStorage.setItem(STORAGE_FETCH, state.lastFetch.toISOString());
+        } catch (e) { /* ignore */ }
+      }
+
+      // ── Helpers ─────────────────────────────────────────────
+      function esc(str) {
+        if (typeof str !== 'string') return '';
+        return str
+          .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      }
+
+      function stripHtml(html) {
+        if (!html) return '';
+        var text = html
+          .replace(/<script[\s\S]*?<\/script>/gi, '')
+          .replace(/<style[\s\S]*?<\/style>/gi, '')
+          .replace(/\{\{.*?\}\}/g, '')
+          .replace(/<[^>]+>/g, ' ')
+          .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&')
+          .replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+          .replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+          .replace(/\s+/g, ' ').trim();
+        // Strip common newsletter boilerplate preambles
+        text = text.replace(/^(Read\s+Online\s*[|\u2022]?\s*)?(Sign\s+Up\s*[|\u2022]?\s*)?(Advertise\s*[|\u2022]?\s*)?(Unsubscribe\s*[|\u2022]?\s*)?(View\s+in\s+browser\s*[|\u2022]?\s*)?/i, '');
+        text = text.replace(/^(Good\s+(morning|afternoon|evening|day)[,.!]?\s+)/i, '');
+        return text.trim();
+      }
+
+      function truncate(str, n) {
+        n = n || 260;
+        if (!str || str.length <= n) return str || '';
+        return str.substring(0, n).replace(/\s+\S*$/, '') + '…';
+      }
+
+      function makeId(url) {
+        var h = 0;
+        for (var i = 0; i < url.length; i++) {
+          h = Math.imul(31, h) + url.charCodeAt(i) | 0;
+        }
+        return Math.abs(h).toString(16).padStart(8, '0');
+      }
+
+      function timeAgo(dateStr) {
+        var d = new Date(dateStr);
+        if (isNaN(d)) return '?';
+        var s = Math.floor((Date.now() - d.getTime()) / 1000);
+        if (s < 60) return 'just now';
+        var m = Math.floor(s / 60);
+        if (m < 60) return m + 'm ago';
+        var h = Math.floor(m / 60);
+        if (h < 24) return h + 'h ago';
+        return Math.floor(h / 24) + 'd ago';
+      }
+
+      function absTime(dateStr) {
+        return new Date(dateStr).toLocaleString('en-US', {
+          month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true
+        });
+      }
+
+      function isWithinWindow(a) {
+        return (Date.now() - new Date(a.published_at).getTime()) < WINDOW_MS;
+      }
+
+      // ── RSS Parsing ──────────────────────────────────────────
+      function extractImage(itemEl) {
+        var ns = 'http://search.yahoo.com/mrss/';
+        var mc = itemEl.getElementsByTagNameNS(ns, 'content');
+        if (mc.length && mc[0].getAttribute('url')) return mc[0].getAttribute('url');
+
+        var enc = itemEl.querySelector('enclosure');
+        if (enc && (enc.getAttribute('type') || '').startsWith('image')) return enc.getAttribute('url');
+
+        var contentNS = 'http://purl.org/rss/1.0/modules/content/';
+        var encoded = itemEl.getElementsByTagNameNS(contentNS, 'encoded');
+        var rawHtml = encoded.length
+          ? encoded[0].textContent
+          : ((itemEl.querySelector('description') || {}).textContent || '');
+        var m = rawHtml.match(/<img[^>]+src=["']([^"']+)["']/i);
+        if (m && m[1] && m[1].startsWith('http') && !m[1].includes('pixel') && !m[1].includes('track')) return m[1];
+        return null;
+      }
+
+      function parseRSS(xmlText, feedMeta) {
+        var parser = new DOMParser();
+        var xml = parser.parseFromString(xmlText, 'application/xml');
+        if (xml.querySelector('parsererror')) throw new Error('XML parse error');
+
+        var items = xml.querySelectorAll('item');
+        var fetched = new Date().toISOString();
+        var articles = [];
+        var contentNS = 'http://purl.org/rss/1.0/modules/content/';
+
+        items.forEach(function (item) {
+          var title = (item.querySelector('title') || {}).textContent;
+          var link = (item.querySelector('link') || {}).textContent
+            || (item.querySelector('guid') || {}).textContent;
+          if (!title || !link) return;
+          title = title.trim(); link = link.trim();
+
+          var pubDate = (item.querySelector('pubDate') || {}).textContent;
+          var pd = pubDate ? new Date(pubDate) : null;
+          var pubAt = (pd && !isNaN(pd)) ? pd.toISOString() : fetched;
+
+          var encoded = item.getElementsByTagNameNS(contentNS, 'encoded');
+          var rawHtml = encoded.length
+            ? encoded[0].textContent
+            : ((item.querySelector('description') || {}).textContent || '');
+
+          var cats = item.querySelectorAll('category');
+          var tags = [];
+          cats.forEach(function (c) { if (c.textContent.trim()) tags.push(c.textContent.trim()); });
+
+          articles.push({
+            id: makeId(link),
+            title: title,
+            summary: truncate(stripHtml(rawHtml)),
+            url: link,
+            source: feedMeta.source,
+            source_label: feedMeta.source_label,
+            published_at: pubAt,
+            fetched_at: fetched,
+            image_url: extractImage(item),
+            tags: tags,
+            is_saved: false
+          });
+        });
+        return articles;
+      }
+
+      // ── Fetch ────────────────────────────────────────────────
+      function fetchWithProxy(feedMeta, proxyUrl) {
+        return new Promise(function (resolve, reject) {
+          var xhr = new XMLHttpRequest();
+          // Adjust proxy URL building based on provider
+          var finalUrl = proxyUrl.includes('corsproxy.io')
+            ? proxyUrl + encodeURIComponent(feedMeta.url)
+            : (proxyUrl.includes('allorigins')
+              ? proxyUrl + encodeURIComponent(feedMeta.url)
+              : proxyUrl + encodeURIComponent(feedMeta.url)); // codetabs
+
+          xhr.open('GET', finalUrl, true);
+          xhr.timeout = FETCH_TIMEOUT_MS;
+          xhr.onload = function () {
+            if (xhr.status !== 200) { reject(new Error('HTTP ' + xhr.status)); return; }
+            try {
+              var xmlStr = '';
+              // allorigins.win returns JSON; codetabs and corsproxy return raw text
+              if (proxyUrl.includes('allorigins')) {
+                var data = JSON.parse(xhr.responseText);
+                xmlStr = data.contents;
+              } else {
+                xmlStr = xhr.responseText;
+              }
+
+              if (!xmlStr) { reject(new Error('Empty response')); return; }
+              resolve(parseRSS(xmlStr, feedMeta));
+            } catch (e) { reject(e); }
+          };
+          xhr.onerror = function () { reject(new Error('Network error')); };
+          xhr.ontimeout = function () { reject(new Error('Timeout (' + (FETCH_TIMEOUT_MS / 1000) + 's)')); };
+          xhr.send();
+        });
+      }
+
+      function fetchFeed(feedMeta) {
+        // Updated proxy list for better reliability
+        var proxies = [
+          'https://api.allorigins.win/get?url=',
+          'https://api.codetabs.com/v1/proxy?quest=',
+          'https://corsproxy.io/?'
+        ];
+
+        return fetchWithProxy(feedMeta, proxies[0])
+          .catch(function (e) {
+            console.warn('Proxy 1 failed, trying Proxy 2:', e.message);
+            return fetchWithProxy(feedMeta, proxies[1]);
+          })
+          .catch(function (e) {
+            console.warn('Proxy 2 failed, trying Proxy 3:', e.message);
+            return fetchWithProxy(feedMeta, proxies[2]);
+          });
+      }
+
+      // ── Data ─────────────────────────────────────────────────
+      function mergeArticles(existing, incoming) {
+        var map = {};
+        // 1. Map existing articles
+        existing.forEach(function (a) { map[a.id] = a; });
+
+        // 2. Add incoming (updates existing if id matches)
+        incoming.forEach(function (a) {
+          if (map[a.id]) a.is_saved = map[a.id].is_saved;
+          map[a.id] = a;
+        });
+
+        // 3. Cache Eviction: Keep only articles within window OR saved
+        var all = Object.values(map);
+        var pruned = all.filter(function (a) {
+          return isWithinWindow(a) || state.savedIds[a.id];
+        });
+
+        return pruned.sort(function (a, b) {
+          return new Date(b.published_at) - new Date(a.published_at);
+        });
+      }
+
+      function getFiltered() {
+        var tab = state.activeTab;
+        if (tab === 'saved') return state.articles.filter(function (a) { return state.savedIds[a.id]; });
+        var fresh = state.articles.filter(function (a) { return isWithinWindow(a) || state.savedIds[a.id]; });
+        if (tab === 'all') return fresh;
+        return fresh.filter(function (a) { return a.source === tab; });
+      }
+
+      // ── Render: Card HTML ────────────────────────────────────
+      function cardHtml(a, isFirst) {
+        var saved = !!state.savedIds[a.id];
+        var feed = FEEDS.find(function (f) { return f.source === a.source; }) || {};
+        var color = feed.color || '#e8521a';
+
+        var topPickHtml = isFirst
+          ? '<span class="top-pick-badge">TOP PICK</span>'
+          : '';
+
+        var imgHtml = a.image_url
+          ? '<div class="card-image">'
+          + topPickHtml
+          + '<img src="' + esc(a.image_url) + '" alt="" loading="lazy" onerror="this.parentElement.remove()">'
+          + '</div>'
+          : (isFirst ? '<div style="position:relative;padding:12px 16px 0;">' + topPickHtml + '</div>' : '');
+
+        var tagsHtml = (a.tags && a.tags.length)
+          ? '<div class="card-tags">'
+          + a.tags.slice(0, 3).map(function (t) { return '<span class="tag">' + esc(t) + '</span>'; }).join('')
+          + '</div>'
+          : '';
+
+        return '<article class="article-card" data-id="' + esc(a.id) + '">'
+          + imgHtml
+          + '<div class="card-body">'
+          + '<div class="card-meta">'
+          + '<span class="source-badge" style="--source-color:' + color + '">' + esc(a.source_label) + '</span>'
+          + '<span class="card-time" title="' + absTime(a.published_at) + '">' + timeAgo(a.published_at) + '</span>'
+          + '</div>'
+          + '<h2 class="card-title"><a href="' + esc(a.url) + '" target="_blank" rel="noopener noreferrer">' + esc(a.title) + '</a></h2>'
+          + (a.summary ? '<p class="card-summary">' + esc(a.summary) + '</p>' : '')
+          + tagsHtml
+          + '<div class="card-footer">'
+          + '<a href="' + esc(a.url) + '" target="_blank" rel="noopener noreferrer" class="read-more-btn">Read Article →</a>'
+          + '<button class="save-btn' + (saved ? ' saved' : '') + '" data-id="' + esc(a.id) + '" aria-label="' + (saved ? 'Unsave' : 'Save') + '">'
+          + '<span>' + (saved ? '★' : '☆') + '</span>'
+          + '<span>' + (saved ? 'Saved' : 'Save') + '</span>'
+          + '</button>'
+          + '</div>'
+          + '</div>'
+          + '</article>';
+      }
+
+      // ── Render: Articles ─────────────────────────────────────
+      function render() {
+        var grid = document.getElementById('articles-grid');
+        var empty = document.getElementById('empty-state');
+        var emptyMsg = document.getElementById('empty-message');
+        var arts = getFiltered();
+
+        updateStats();
+        updateBadges();
+        updateHeader();
+
+        if (!arts.length) {
+          grid.innerHTML = '';
+          var msgs = {
+            saved: "You haven't saved any articles yet. Click ☆ on any card to save it.",
+            all: "No new articles in the last 24 hours. Check back later or click Refresh Feeds."
+          };
+          emptyMsg.textContent = msgs[state.activeTab] || msgs.all;
+          empty.style.display = 'flex';
+          return;
+        }
+
+        empty.style.display = 'none';
+
+        // Mark first card per-source as top pick
+        var firstSeen = {};
+        grid.innerHTML = arts.map(function (a) {
+          var isFirst = !firstSeen[a.source];
+          firstSeen[a.source] = true;
+          return cardHtml(a, isFirst);
+        }).join('');
+
+        grid.querySelectorAll('.save-btn').forEach(function (btn) {
+          btn.addEventListener('click', function (e) {
+            e.preventDefault();
+            var id = btn.dataset.id;
+            var art = state.articles.find(function (a) { return a.id === id; });
+            if (state.savedIds[id]) {
+              delete state.savedIds[id];
+              if (art) art.is_saved = false;
+            } else {
+              state.savedIds[id] = true;
+              if (art) art.is_saved = true;
+            }
+            saveStorage();
+            btn.classList.add('bounce');
+            setTimeout(function () { btn.classList.remove('bounce'); }, 400);
+            render();
+          });
+        });
+
+        grid.querySelectorAll('.article-card').forEach(function (card, i) {
+          card.style.animationDelay = (i * 0.045) + 's';
+          card.classList.add('animate-in');
+        });
+      }
+
+      // ── Render: Source Status Sidebar ────────────────────────
+      function renderSourceStatus() {
+        var container = document.getElementById('source-status');
+        if (!container) return;
+        container.innerHTML = FEEDS.map(function (feed) {
+          var status = state.loading[feed.source] || 'idle';
+          var count = state.articles.filter(function (a) { return a.source === feed.source && isWithinWindow(a); }).length;
+          var dotCls = status === 'loading' ? 'loading' : status === 'loaded' ? 'ok' : status === 'error' ? 'error' : 'idle';
+          var cntTxt = status === 'loading' ? '●'
+            : status === 'loaded' ? count + ' art.'
+              : status === 'error' ? 'Error'
+                : '—';
+          return '<div class="source-status-item">'
+            + '<span class="status-dot ' + dotCls + '"></span>'
+            + '<span class="source-status-name">' + esc(feed.source_label) + '</span>'
+            + '<span class="source-status-count">' + cntTxt + '</span>'
+            + (status === 'error' ? '<button onclick="fetchAll(true)" style="font-size:13px;color:#ef4444;margin-left:4px;">↻</button>' : '')
+            + '</div>';
+        }).join('');
+      }
+
+      // ── Render: Stats + Badges ───────────────────────────────
+      function updateStats() {
+        var fresh = state.articles.filter(isWithinWindow);
+        document.getElementById('stat-total').textContent = fresh.length || '—';
+        document.getElementById('stat-saved').textContent = Object.keys(state.savedIds).length || '—';
+      }
+
+      function updateBadges() {
+        var cutoff = Date.now() - WINDOW_MS;
+        var counts = { all: 0, bensbites: 0, rundown_ai: 0, saved: Object.keys(state.savedIds).length };
+        state.articles.forEach(function (a) {
+          if (new Date(a.published_at).getTime() >= cutoff) {
+            counts.all++;
+            if (counts[a.source] !== undefined) counts[a.source]++;
+          }
+        });
+        var map = { all: 'badge-all', bensbites: 'badge-bensbites', rundown_ai: 'badge-rundown', saved: 'badge-saved' };
+        Object.keys(map).forEach(function (key) {
+          var el = document.getElementById(map[key]);
+          if (el) el.textContent = counts[key] || '0';
+        });
+      }
+
+      function updateHeader() {
+        var label = TAB_LABELS[state.activeTab] || 'Articles';
+        var bc = document.getElementById('breadcrumb-current');
+        var pt = document.getElementById('page-title');
+        var st = document.getElementById('section-title');
+        var mc = document.querySelector('.main-content');
+        if (bc) bc.textContent = label;
+        if (pt) pt.textContent = label;
+        if (st) st.textContent = state.activeTab === 'saved' ? 'Your Saved Articles' : 'Recent Articles';
+        if (mc) mc.classList.toggle('saved-page', state.activeTab === 'saved');
+      }
+
+      function updateLastFetch() {
+        var el = document.getElementById('last-fetch-time');
+        if (!el) return;
+        el.textContent = state.lastFetch ? 'Updated ' + timeAgo(state.lastFetch.toISOString()) : 'Not yet fetched';
+      }
+
+      function setRefreshState(on) {
+        var btn = document.getElementById('refresh-btn');
+        if (!btn) return;
+        btn.classList.toggle('spinning', on);
+        btn.disabled = on;
+      }
+
+      // ── Fetch All ────────────────────────────────────────────
+      function fetchAll(force) {
+        if (!force && state.lastFetch && (Date.now() - state.lastFetch.getTime() < FETCH_THROTTLE_MS)) return;
+
+        setRefreshState(true);
+        FEEDS.forEach(function (f) { state.loading[f.source] = 'loading'; state.errors[f.source] = null; });
+        renderSourceStatus();
+
+        var done = 0;
+        FEEDS.forEach(function (feed) {
+          fetchFeed(feed)
+            .then(function (articles) {
+              state.loading[feed.source] = 'loaded';
+              state.articles = mergeArticles(state.articles, articles);
+            })
+            .catch(function (e) {
+              state.loading[feed.source] = 'error';
+              state.errors[feed.source] = e.message;
+              console.error('[Scruper]', feed.source, e.message);
+            })
+            .finally(function () {
+              renderSourceStatus();
+              render();
+              saveStorage();
+              done++;
+              if (done === FEEDS.length) {
+                state.lastFetch = new Date();
+                saveStorage();
+                setRefreshState(false);
+                updateLastFetch();
+              }
+            });
+        });
+      }
+
+      // Make fetchAll callable from inline retry buttons
+      window.fetchAll = fetchAll;
+
+      // ── Init ─────────────────────────────────────────────────
+      function init() {
+        loadStorage();
+        renderSourceStatus();
+        render();
+        updateLastFetch();
+
+        // Tab nav
+        document.querySelectorAll('[data-tab]').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            state.activeTab = btn.dataset.tab;
+            document.querySelectorAll('[data-tab]').forEach(function (b) {
+              b.classList.toggle('active', b.dataset.tab === state.activeTab);
+            });
+            render();
+          });
+        });
+
+        // Refresh
+        var rb = document.getElementById('refresh-btn');
+        if (rb) rb.addEventListener('click', function () { fetchAll(true); });
+
+        // Kick off fetch
+        fetchAll(false);
+        setInterval(function () { fetchAll(false); }, FETCH_THROTTLE_MS);
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+      } else {
+        init();
+      }
+
+    })();
+  </script>
+
+</body>
+
+</html>
