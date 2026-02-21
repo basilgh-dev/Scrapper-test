@@ -17,6 +17,22 @@
 
   <div class="app-shell">
 
+    <!-- Mobile Top Bar -->
+    <div class="mobile-top-bar">
+      <div class="mobile-brand">
+        <img src="DesignGuidelines/DesignLogo.png" alt="Scruper" class="mobile-logo">
+        <span>Scruper</span>
+      </div>
+      <button id="sidebar-toggle" class="sidebar-toggle-btn" aria-label="Toggle Menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
     <!-- ══════════════════════════════════════
          SIDEBAR
     ═══════════════════════════════════════ -->
@@ -221,7 +237,7 @@
       var TAB_LABELS = {
         all: 'All Articles',
         bensbites: "Ben's Bites",
-        rundown_ai: 'The AI Rundown',
+        rundown_ai: 'The Rundown AI',
         saved: 'Saved Articles'
       };
 
@@ -719,6 +735,36 @@
             render();
           });
         });
+
+        // Sidebar Toggle for Mobile
+        var toggle = document.getElementById('sidebar-toggle');
+        var sidebar = document.querySelector('.sidebar');
+        var overlay = document.getElementById('sidebar-overlay');
+
+        if (toggle && sidebar && overlay) {
+          function closeSidebar() {
+            sidebar.classList.remove('open');
+            overlay.classList.remove('active');
+            toggle.classList.remove('active');
+            document.body.style.overflow = '';
+          }
+
+          toggle.addEventListener('click', function () {
+            var isOpen = sidebar.classList.toggle('open');
+            overlay.classList.toggle('active', isOpen);
+            toggle.classList.toggle('active', isOpen);
+            document.body.style.overflow = isOpen ? 'hidden' : '';
+          });
+
+          overlay.addEventListener('click', closeSidebar);
+
+          // Close on nav item click (mobile)
+          document.querySelectorAll('.nav-item').forEach(function (item) {
+            item.addEventListener('click', function () {
+              if (window.innerWidth <= 1024) closeSidebar();
+            });
+          });
+        }
 
         // Refresh
         var rb = document.getElementById('refresh-btn');
