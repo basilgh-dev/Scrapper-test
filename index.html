@@ -391,57 +391,39 @@
       }
 
       // ── Fetch ────────────────────────────────────────────────
-      function fetchWithProxy(feedMeta, proxyUrl) {
-        return new Promise(function (resolve, reject) {
-          var xhr = new XMLHttpRequest();
-          // Adjust proxy URL building based on provider
-          var finalUrl = proxyUrl.includes('corsproxy.io')
-            ? proxyUrl + encodeURIComponent(feedMeta.url)
-            : (proxyUrl.includes('allorigins')
-              ? proxyUrl + encodeURIComponent(feedMeta.url)
-              : proxyUrl + encodeURIComponent(feedMeta.url)); // codetabs
-
-          xhr.open('GET', finalUrl, true);
-          xhr.timeout = FETCH_TIMEOUT_MS;
-          xhr.onload = function () {
-            if (xhr.status !== 200) { reject(new Error('HTTP ' + xhr.status)); return; }
-            try {
-              var xmlStr = '';
-              // allorigins.win returns JSON; codetabs and corsproxy return raw text
-              if (proxyUrl.includes('allorigins')) {
-                var data = JSON.parse(xhr.responseText);
-                xmlStr = data.contents;
-              } else {
-                xmlStr = xhr.responseText;
-              }
-
-              if (!xmlStr) { reject(new Error('Empty response')); return; }
-              resolve(parseRSS(xmlStr, feedMeta));
-            } catch (e) { reject(e); }
-          };
-          xhr.onerror = function () { reject(new Error('Network error')); };
-          xhr.ontimeout = function () { reject(new Error('Timeout (' + (FETCH_TIMEOUT_MS / 1000) + 's)')); };
-          xhr.send();
-        });
-      }
-
-      function fetchFeed(feedMeta) {
-        // Updated proxy list for better reliability
+      async function fetchFeed(feedMeta) {
         var proxies = [
           'https://api.allorigins.win/get?url=',
           'https://api.codetabs.com/v1/proxy?quest=',
           'https://corsproxy.io/?'
         ];
 
-        return fetchWithProxy(feedMeta, proxies[0])
-          .catch(function (e) {
-            console.warn('Proxy 1 failed, trying Proxy 2:', e.message);
-            return fetchWithProxy(feedMeta, proxies[1]);
-          })
-          .catch(function (e) {
-            console.warn('Proxy 2 failed, trying Proxy 3:', e.message);
-            return fetchWithProxy(feedMeta, proxies[2]);
-          });
+        for (var i = 0; i < proxies.length; i++) {
+          try {
+            console.log('[Scruper] Fetching ' + feedMeta.source_label + ' via proxy ' + (i + 1));
+            var proxyUrl = proxies[i];
+            var finalUrl = proxyUrl + encodeURIComponent(feedMeta.url);
+
+            var res = await fetch(finalUrl, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+
+            var xmlStr = '';
+            if (proxyUrl.includes('allorigins')) {
+              var data = await res.json();
+              xmlStr = data.contents;
+            } else {
+              xmlStr = await res.text();
+            }
+
+            if (!xmlStr) throw new Error('Empty response');
+            var articles = parseRSS(xmlStr, feedMeta);
+            console.log('[Scruper] Successfully fetched ' + articles.length + ' articles for ' + feedMeta.source_label);
+            return articles;
+          } catch (e) {
+            console.warn('[Scruper] Proxy ' + (i + 1) + ' failed for ' + feedMeta.source_label + ':', e.message);
+            if (i === proxies.length - 1) throw e; // last proxy failed
+          }
+        }
       }
 
       // ── Data ─────────────────────────────────────────────────
@@ -588,11 +570,13 @@
             : status === 'loaded' ? count + ' art.'
               : status === 'error' ? 'Error'
                 : '—';
-          return '<div class="source-status-item">'
+          var err = state.errors[feed.source];
+          var title = err ? 'Error: ' + err : feed.description;
+          return '<div class="source-status-item" title="' + esc(title) + '">'
             + '<span class="status-dot ' + dotCls + '"></span>'
             + '<span class="source-status-name">' + esc(feed.source_label) + '</span>'
             + '<span class="source-status-count">' + cntTxt + '</span>'
-            + (status === 'error' ? '<button onclick="fetchAll(true)" style="font-size:13px;color:#ef4444;margin-left:4px;">↻</button>' : '')
+            + (status === 'error' ? '<button onclick="fetchAll(true)" style="font-size:13px;color:#ef4444;margin-left:4px;" title="Retry">↻</button>' : '')
             + '</div>';
         }).join('');
       }
@@ -659,6 +643,7 @@
             .then(function (articles) {
               state.loading[feed.source] = 'loaded';
               state.articles = mergeArticles(state.articles, articles);
+              console.log('[Scruper] Merged ' + articles.length + ' articles from ' + feed.source);
             })
             .catch(function (e) {
               state.loading[feed.source] = 'error';
