@@ -392,10 +392,44 @@
 
       // ── Fetch ────────────────────────────────────────────────
       async function fetchFeed(feedMeta) {
+        // 1. Specialized RSS-to-JSON service (Primary - very reliable for Substack/Beehiiv)
+        try {
+          console.log('[Scruper] Fetching ' + feedMeta.source_label + ' via RSS2JSON...');
+          var rssUrl = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(feedMeta.url);
+          var res = await fetch(rssUrl, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
+          if (res.ok) {
+            var data = await res.json();
+            if (data.status === 'ok' && data.items) {
+              var fetched = new Date().toISOString();
+              var articles = data.items.map(function (item) {
+                return {
+                  id: makeId(item.link || item.guid),
+                  title: (item.title || 'Untitled').trim(),
+                  summary: truncate(stripHtml(item.content || item.description || '')),
+                  url: item.link,
+                  source: feedMeta.source,
+                  source_label: feedMeta.source_label,
+                  published_at: item.pubDate ? new Date(item.pubDate).toISOString() : fetched,
+                  fetched_at: fetched,
+                  image_url: item.enclosure?.link || item.thumbnail || null,
+                  tags: item.categories || [],
+                  is_saved: false
+                };
+              });
+              console.log('[Scruper] RSS2JSON success: ' + articles.length + ' articles');
+              return articles;
+            }
+          }
+          console.warn('[Scruper] RSS2JSON failed, falling back to CORS proxies...');
+        } catch (e) {
+          console.warn('[Scruper] RSS2JSON error:', e.message);
+        }
+
+        // 2. Generic CORS Proxies (Fallbacks)
         var proxies = [
           'https://api.allorigins.win/get?url=',
-          'https://api.codetabs.com/v1/proxy?quest=',
-          'https://corsproxy.io/?'
+          'https://corsproxy.io/?url=',
+          'https://api.codetabs.com/v1/proxy?quest='
         ];
 
         for (var i = 0; i < proxies.length; i++) {
@@ -417,11 +451,11 @@
 
             if (!xmlStr) throw new Error('Empty response');
             var articles = parseRSS(xmlStr, feedMeta);
-            console.log('[Scruper] Successfully fetched ' + articles.length + ' articles for ' + feedMeta.source_label);
+            console.log('[Scruper] Proxy ' + (i + 1) + ' success: ' + articles.length + ' articles');
             return articles;
           } catch (e) {
             console.warn('[Scruper] Proxy ' + (i + 1) + ' failed for ' + feedMeta.source_label + ':', e.message);
-            if (i === proxies.length - 1) throw e; // last proxy failed
+            if (i === proxies.length - 1) throw e;
           }
         }
       }
